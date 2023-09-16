@@ -1,0 +1,22 @@
+---
+# defaults file for joe-speedboat.vsphere_clone_vm
+vcenter_api_url: "vcenter.example.com"
+vcenter_username: "myadm@mydomain.com"
+vcenter_password: "mysecret_do_not_share"
+datacenter_name: "datacenter_name"
+cluster_name: "cluster_name"
+template_name: "vm_template_name"
+vm_name: "new_vm_name"
+vm_folder: "vm_folder"
+vm_network: "network_name"
+vm_memory: 1024
+vm_disk_gb: 50
+num_cpus: 2
+scsi_type: "paravirtual"
+datastore_name: "datastore_name"
+vm_power_up: True
+vm_username: "vm_username"
+vm_password: "vm_password"
+validate_certs: true
+datastore_check_size: True
+vm_post_setup_template: rhel8.j2

@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  become: False
+  roles:
+    - joe-speedboat.vsphere_clone_vm
+  vars_files:
+    - vars.yml

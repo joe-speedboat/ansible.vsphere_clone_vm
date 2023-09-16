@@ -1,0 +1,23 @@
+---
+# tasks file for joe-speedboat.vsphere_clone_vm
+- name: Clone VM from template
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_api_url }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: "{{ validate_certs }}"
+    cluster: "{{ cluster_name }}"
+    datacenter: "{{ datacenter_name }}"
+    folder: "{{ vm_folder }}"
+    name: "{{ vm_name }}"
+    template: "{{ template_name }}"
+    networks:
+      - name: "{{ vm_network }}"
+    hardware:
+      memory_mb: "{{ vm_memory }}"
+      num_cpus: "{{ num_cpus }}"
+      scsi: "{{ scsi_type }}"
+    disk:
+      - size_gb: "{{ vm_disk_gb }}"
+        datastore: "{{ datastore_name }}"
+  delegate_to: localhost

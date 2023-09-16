@@ -1,0 +1,18 @@
+---
+- name: Check if datastore has twice the VM size of free space left
+  when: datastore_check_size
+  block:
+    - name: Get datastore info
+      community.vmware.vmware_datastore_info:
+        hostname: "{{ vcenter_api_url }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ validate_certs }}"
+        datacenter: "{{ datacenter_name }}"
+        name: "{{ datastore_name }}"
+      register: datastore_facts
+
+    - name: Fail if datastore does not have enough free space
+      fail:
+        msg: "Datastore {{ datastore_name }} does not have enough free space, it needs min twice of VM size for safety reason. min_needed_space={{ (vm_disk_gb * 2) }}GB actual_free_space={{ ((datastore_facts.datastores | selectattr('name', 'equalto', datastore_name) | first).freeSpace / 1024 /1024 / 1024)|int }}GB"
+      when: (datastore_facts.datastores | selectattr('name', 'equalto', datastore_name) | first).freeSpace < (vm_disk_gb * 2 * 1024 * 1024 * 1024)

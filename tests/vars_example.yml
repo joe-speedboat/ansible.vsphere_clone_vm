@@ -1,0 +1,19 @@
+vcenter_api_url: "vcenter.example.com"
+vcenter_username: "your_username"
+vcenter_password: "your_password"
+datacenter_name: "datacenter_name"
+cluster_name: "cluster_name"
+template_name: "template_name"
+vm_name: "new_vm_name"
+vm_folder: "vm_folder"
+vm_network: "network_name"
+vm_memory: "memory_size"
+vm_disk: "disk_size"
+num_cpus: 2
+scsi_type: "paravirtual"
+datastore_name: "datastore_name"
+vm_power_up: true
+vm_post_setup_cmd: ["command1", "command2"]
+vm_username: "vm_username"
+vm_password: "vm_password"
+validate_certs: true

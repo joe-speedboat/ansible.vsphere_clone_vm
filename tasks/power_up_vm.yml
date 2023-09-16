@@ -1,0 +1,11 @@
+---
+- name: Power up VM
+  community.vmware.vmware_guest_powerstate:
+    hostname: "{{ vcenter_api_url }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: "{{ validate_certs }}"
+    folder: "{{ vm_folder }}"
+    name: "{{ vm_name }}"
+    state: powered-on
+  delegate_to: localhost

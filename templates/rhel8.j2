@@ -1,0 +1,17 @@
+LOG=/root/setup.log
+DISK=sda
+PART=3
+echo STARTED POST SETUP TASKS >> $LOG
+echo ======================== >> $LOG
+echo "DATE: $(date)" >> $LOG
+echo SET HOSTNAME >> $LOG
+hostnamectl set-hostname {{ vm_name }} >>$LOG 2>&1
+echo >> $LOG
+echo EXPAND ROOT DISK >> $LOG
+LV=/dev/rl/root
+parted /dev/$DISK resizepart $PART 100% >>$LOG 2>&1
+pvresize /dev/$DISK$PART >>$LOG 2>&1
+lvextend -l +100%FREE $LV >>$LOG 2>&1
+xfs_growfs $LV >>$LOG 2>&1
+echo >> $LOG
+echo post install steps finished >> $LOG

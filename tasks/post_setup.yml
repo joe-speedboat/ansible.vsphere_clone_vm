@@ -1,0 +1,44 @@
+---
+- name: Wait for VM to power on
+  community.vmware.vmware_guest_tools_wait:
+    hostname: "{{ vcenter_api_url }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: "{{ validate_certs }}"
+    folder: "{{ vm_folder }}"
+    name: "{{ vm_name }}"
+  delegate_to: localhost
+
+- name: Generate post setup commands from template
+  template:
+    src: "{{ vm_post_setup_template }}"
+    dest: "/tmp/post_setup.sh"
+
+- name: Push post setup commands to VM
+  community.vmware.vmware_guest_file_operation:
+    hostname: "{{ vcenter_api_url }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: "{{ validate_certs }}"
+    vm_id: "{{ vm_name }}"
+    vm_username: "{{ vm_username }}"
+    vm_password: "{{ vm_password }}"
+    copy:
+      src: "/tmp/post_setup.sh"
+      dest: "/tmp/post_setup.sh"
+  delegate_to: localhost
+
+- name: Execute post setup commands inside VM
+  community.vmware.vmware_vm_shell:
+    hostname: "{{ vcenter_api_url }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: "{{ validate_certs }}"
+    folder: "{{ vm_folder }}"
+    vm_id: "{{ vm_name }}"
+    vm_username: "{{ vm_username }}"
+    vm_password: "{{ vm_password }}"
+    vm_shell: "/bin/bash"
+    vm_shell_args: "/tmp/post_setup.sh"
+  when: vm_post_setup_template is defined
+  delegate_to: localhost
