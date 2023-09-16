@@ -71,7 +71,7 @@ None.
 
 ## License
 
-BSD
+GPLv3
 
 ## Testing
 
