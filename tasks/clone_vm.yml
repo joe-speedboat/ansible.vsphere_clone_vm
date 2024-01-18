@@ -14,7 +14,7 @@
     networks:
       - name: "{{ vm_network }}"
     hardware:
-      memory_mb: "{{ vm_memory }}"
+      memory_mb: "{{ vm_memory_mb }}"
       num_cpus: "{{ num_cpus }}"
       scsi: "{{ scsi_type }}"
     disk:

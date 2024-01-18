@@ -24,8 +24,8 @@ The following variables are used in this role:
 - `vm_name`: The name of the new VM.
 - `vm_folder`: The folder where the new VM will be created.
 - `vm_network`: The network to connect the new VM to.
-- `vm_memory`: The memory size of the new VM.
-- `vm_disk_gb`: The disk size (in GB) of the new VM.
+- `vm_memory_mb`: The memory size of the new VM.
+- `vm_disk_gb`: The disk size of the new VM.
 - `num_cpus`: The number of CPUs for the new VM.
 - `scsi_type`: The SCSI controller type for the new VM.
 - `datastore_name`: The datastore where the new VM will be created.
@@ -56,7 +56,7 @@ None.
     vm_name: "new_vm_name"
     vm_folder: "vm_folder"
     vm_network: "network_name"
-    vm_memory: 1024
+    vm_memory_mb: 1024
     vm_disk_gb: 50
     num_cpus: 2
     scsi_type: "paravirtual"

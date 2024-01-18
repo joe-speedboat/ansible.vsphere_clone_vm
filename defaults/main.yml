@@ -9,7 +9,7 @@ template_name: "vm_template_name"
 vm_name: "new_vm_name"
 vm_folder: "vm_folder"
 vm_network: "network_name"
-vm_memory: 1024
+vm_memory_mb: 1024
 vm_disk_gb: 50
 num_cpus: 2
 scsi_type: "paravirtual"
