@@ -1,5 +1,22 @@
 ---
 # tasks file for joe-speedboat.vsphere_clone_vm
+- name: Check if VM already esists
+  community.vmware.vmware_guest_info:
+    hostname: "{{ vcenter_api_url }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: "{{ validate_certs }}"
+    datacenter: "{{ datacenter_name }}"
+    name: "{{ vm_name }}"
+  register: vm_info
+  ignore_errors: yes
+  delegate_to: localhost
+
+- name: Fail if VM already exists
+  fail:
+    msg: "The VM {{ vm_name }} already exists"
+  when: vm_info is defined and vm_info.failed == False
+
 - name: Clone VM from template
   community.vmware.vmware_guest:
     hostname: "{{ vcenter_api_url }}"
@@ -13,6 +30,7 @@
     template: "{{ template_name }}"
     networks:
       - name: "{{ vm_network }}"
+        start_connected: True
     hardware:
       memory_mb: "{{ vm_memory_mb }}"
       num_cpus: "{{ num_cpus }}"
