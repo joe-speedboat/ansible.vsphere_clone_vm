@@ -1,4 +1,21 @@
 ---
+# For some reason, VM Nic is disconnected after cloning
+# https://communities.vmware.com/t5/vCenter-Server-Discussions/deployed-VM-from-template-but-NIC-is-disconnected/td-p/976946
+# https://github.com/ansible/ansible/issues/40564
+- name: Enforce Network Settings
+  community.vmware.vmware_guest:
+    hostname: "{{ vcenter_api_url }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: "{{ validate_certs }}"
+    datacenter: "{{ datacenter_name }}"
+    name: "{{ vm_name }}"
+    networks:
+      - name: "{{ vm_network }}"
+        start_connected: True
+        connected: True
+  delegate_to: localhost
+
 - name: Wait for VM to power on
   community.vmware.vmware_guest_tools_wait:
     hostname: "{{ vcenter_api_url }}"
