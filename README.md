@@ -24,6 +24,15 @@ The following variables are used in this role:
 - `vm_name`: The name of the new VM.
 - `vm_folder`: The folder where the new VM will be created.
 - `vm_network`: The network to connect the new VM to.
+- `vm_fistboot_wait_sec`: Wait after poweron until proceed (ubuntu does a reboot for some reason)
+- `configure_vm_nic`: Proceed NIC config script or not
+- `vm_nic`: This are the values for nic configuration
+  - `ip`: IP address
+  - `mask`: Subnet mask
+  - `gateway`: Gateway IP
+  - `hostname`: Hostname in short
+  - `dns_domain`: DNS domain name
+  - `dns_server`:  All DNS servers as one space separated string
 - `vm_memory_mb`: The memory size of the new VM.
 - `vm_disk_gb`: The disk size of the new VM.
 - `num_cpus`: The number of CPUs for the new VM.
@@ -62,11 +71,21 @@ None.
     scsi_type: "paravirtual"
     datastore_name: "datastore_name"
     vm_power_up: true
-    vm_post_setup_template: rhel8.j2
+    vm_post_setup_template: post_setup.j2
     vm_username: "vm_username"
     vm_password: "vm_password"
     validate_certs: true
     datastore_check_size: true
+    configure_vm_network: True
+    vm_nic:
+      ip: "1.2.3.4"
+      mask: "255.255.255.0"
+      gateway: "1.2.3.1"
+      dns_domain: "domain.local"
+      hostname: "{{ vm_name }}"
+      dns_server:  "2.2.2.2 4.4.4.4"
+
+
 ```
 
 ## License

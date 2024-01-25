@@ -15,4 +15,4 @@
     - name: Fail if datastore does not have enough free space
       fail:
         msg: "Datastore {{ datastore_name }} does not have enough free space, it needs min twice of VM size for safety reason. min_needed_space={{ (vm_disk_gb * 2) }}GB actual_free_space={{ ((datastore_facts.datastores | selectattr('name', 'equalto', datastore_name) | first).freeSpace / 1024 /1024 / 1024)|int }}GB"
-      when: (datastore_facts.datastores | selectattr('name', 'equalto', datastore_name) | first).freeSpace < (vm_disk_gb * 2 * 1024 * 1024 * 1024)
+      when: (datastore_facts.datastores | selectattr('name', 'equalto', datastore_name) | first).freeSpace < ((vm_disk_gb|int) * 2 * 1024 * 1024 * 1024)

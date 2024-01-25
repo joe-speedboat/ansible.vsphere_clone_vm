@@ -7,6 +7,16 @@ datacenter_name: "datacenter_name"
 cluster_name: "cluster_name"
 template_name: "vm_template_name"
 vm_name: "new_vm_name"
+vm_fistboot_wait_sec: 90
+configure_vm_nic: True
+vm_nic:
+  ip: "1.2.3.4"
+  mask: "255.255.255.0"
+  gateway: "1.2.3.1"
+  hostname: "{{ vm_name }}"
+  dns_domain: "domain.local"
+  dns_server:  "2.2.2.2 4.4.4.4"
+
 vm_folder: "vm_folder"
 vm_network: "network_name"
 vm_memory_mb: 1024
@@ -17,6 +27,8 @@ datastore_name: "datastore_name"
 vm_power_up: True
 vm_username: "vm_username"
 vm_password: "vm_password"
+vm_post_setup_template: post_setup.j2
+
 validate_certs: true
 datastore_check_size: True
-vm_post_setup_template: rhel8.j2
+

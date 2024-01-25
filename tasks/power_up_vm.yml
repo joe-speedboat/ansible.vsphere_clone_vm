@@ -9,3 +9,7 @@
     name: "{{ vm_name }}"
     state: powered-on
   delegate_to: localhost
+
+- name: wait {{ vm_fistboot_wait_sec|int }} sec to settle up
+  ansible.builtin.pause:
+    seconds: "{{ vm_fistboot_wait_sec|int }}"

@@ -1,0 +1,121 @@
+#!/bin/bash
+# configure vm network settings for ubuntu and rhel-like os
+
+# Log file location
+LOG=/root/configure_vm_nic.log
+
+# Logging function with timestamp
+mylog() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $*" >> $LOG
+}
+
+mylog "STARTED NETWORK SETUP TASKS"
+
+# Assuming these variables are passed from Ansible
+IP="{{ vm_nic.ip }}"
+MASK="{{ vm_nic.mask }}"
+GATEWAY="{{ vm_nic.gateway }}"
+DNS_DOMAIN="{{ vm_nic.dns_domain }}"
+HOSTNAME="{{ vm_nic.hostname }}.{{ vm_nic.dns_domain }}"
+DNS_SERVERS="{{ vm_nic.dns_server }}"
+
+# Detect OS type
+if [[ -f /etc/redhat-release ]]; then
+    OS_TYPE="rhel"
+    mylog "Detected RHEL-based system"
+elif [[ -f /etc/debian_version ]]; then
+    OS_TYPE="debian"
+    mylog "Detected Debian-based system"
+else
+    mylog "Unsupported OS"
+    exit 1
+fi
+
+# Function to configure RHEL-based systems
+configure_rhel() {
+    mylog "Configuring RHEL-based system"
+
+    mylog "Removing existing NIC configurations, excluding the loopback interface"
+    nmcli connection delete $(nmcli -t -f NAME connection show | grep -v 'lo') 2>> $LOG
+
+    mylog "Getting the first non-loopback network interface"
+    NIC=$(ip link show | grep -v lo | awk -F: '$0 !~ "lo|vir|^[^0-9]"{print $2;getline}' | head -n 1)
+
+    mylog "Setting hostname to $HOSTNAME"
+    # rhel8 set-hostname, rhel9 hostname
+    hostnamectl set-hostname $HOSTNAME || hostnamectl hostname $HOSTNAME
+
+    mylog "Converting traditional subnet mask to CIDR notation"
+    IFS='.' read -r i1 i2 i3 i4 <<< "$MASK"
+    CIDR=$(( (i1 == 255) * 8 + (i2 == 255) * 8 + (i3 == 255) * 8 + (i4 == 255) * 8 ))
+
+    mylog "Correcting DNS_SERVERS format"
+    DNS_SERVERS_ARR=($DNS_SERVERS) # Convert string to array
+    DNS_SERVERS_FORMATTED=$(IFS=,; echo "${DNS_SERVERS_ARR[*]}") # Convert array to comma-separated string
+
+
+    mylog "Configuring network interface"
+    nmcli connection add type ethernet con-name $NIC ifname $NIC 2>> $LOG
+    nmcli connection modify $NIC ipv4.addresses $IP/$CIDR 2>> $LOG
+    nmcli connection modify $NIC ipv4.gateway $GATEWAY 2>> $LOG
+    nmcli connection modify $NIC ipv4.dns "$DNS_SERVERS_FORMATTED" 2>> $LOG
+    nmcli connection modify $NIC ipv4.dns-search $DNS_DOMAIN 2>> $LOG
+    nmcli connection modify $NIC ipv4.method manual 2>> $LOG
+    nmcli connection up $NIC 2>> $LOG
+
+    mylog "Disabling IPv6 for the NIC"
+    nmcli connection modify $NIC ipv6.method ignore 2>> $LOG
+
+    mylog "RHEL-based system configuration complete"
+}
+
+# Function to configure Debian-based systems
+configure_debian() {
+    mylog "Configuring Debian-based system"
+
+    mylog "Removing existing netplan configurations, excluding the loopback interface"
+    rm -f /etc/netplan/*.yaml
+
+    mylog "Converting traditional subnet mask to CIDR notation"
+    IFS='.' read -r i1 i2 i3 i4 <<< "$MASK"
+    CIDR=$(( (i1 == 255) * 8 + (i2 == 255) * 8 + (i3 == 255) * 8 + (i4 == 255) * 8 ))
+
+    mylog "Getting the first non-loopback network interface"
+    NIC=$(ip link show | grep -v lo | awk -F: '$0 !~ "lo|vir|^[^0-9]"{print $2;getline}' | head -n 1 | tr -d ' ')
+
+    mylog "Setting hostname to $HOSTNAME"
+    hostnamectl set-hostname $HOSTNAME
+
+    mylog "Creating new netplan configuration"
+    cat << EOF > /etc/netplan/01-netcfg.yaml
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    $NIC:
+      dhcp4: no
+      dhcp6: no
+      addresses: [$IP/$CIDR]
+      gateway4: $GATEWAY
+      nameservers:
+          addresses: [${DNS_SERVERS// /, }]
+          search: [$DNS_DOMAIN]
+EOF
+
+    mylog "Applying netplan configuration"
+    netplan apply 2>> $LOG
+
+    mylog "Debian-based system configuration complete"
+}
+
+# Apply configuration based on OS type
+case $OS_TYPE in
+    "rhel")
+        configure_rhel
+        ;;
+    "debian")
+        configure_debian
+        ;;
+esac
+
+mylog "NETWORK SETUP TASKS COMPLETED"
