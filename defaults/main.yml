@@ -27,7 +27,13 @@ datastore_name: "datastore_name"
 vm_power_up: True
 vm_username: "vm_username"
 vm_password: "vm_password"
-vm_post_setup_template: post_setup.j2
+
+# name of templates for post setup without ending (.j2)
+# configure_vm_nic.j2 template is static and must not get called here
+vm_post_setup_templates: 
+  - disk_resize
+  - freeipa_join
+  - post_setup
 
 validate_certs: true
 datastore_check_size: True

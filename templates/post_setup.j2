@@ -4,14 +4,12 @@ echo ======================== >> $LOG
 echo "DATE: $(date)" >> $LOG
 echo >> $LOG
 
-#echo EXPAND ROOT DISK >> $LOG
-#DISK=sda
-#PART=3
-#LV=/dev/rl/root
-#parted /dev/$DISK resizepart $PART 100% >>$LOG 2>&1
-#pvresize /dev/$DISK$PART >>$LOG 2>&1
-#lvextend -l +100%FREE $LV >>$LOG 2>&1
-#xfs_growfs $LV >>$LOG 2>&1
+echo "INFO: cleanup post install files" >> $LOG 2>&1
+test -d /root/.setup || rm -rfv /root/.setup >> $LOG 2>&1
+mkdir -v /root/.setup >> $LOG 2>&1
+mv -v /root/???* /root/.setup >> $LOG 2>&1
 
 echo >> $LOG
-echo post install steps finished >> $LOG
+echo Post install steps finished >> $LOG
+echo All install logs and scripts got moved to /root/.setup >> $LOG
+echo "DATE: $(date)" >> $LOG

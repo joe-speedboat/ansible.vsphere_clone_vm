@@ -26,72 +26,13 @@
     name: "{{ vm_name }}"
   delegate_to: localhost
 
-- name: configure network settings
-  block:
-  - name: Generate network setup commands from template
-    template:
-      src: "configure_vm_nic.j2"
-      dest: "/tmp/configure_vm_nic.sh"
+- name: configure NIC with post setup script
+  include_tasks: post_setup_nic.yml
+  when: configure_vm_nic
 
-  - name: Push network setup commands to VM
-    community.vmware.vmware_guest_file_operation:
-      hostname: "{{ vcenter_api_url }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: "{{ validate_certs }}"
-      vm_id: "{{ vm_name }}"
-      vm_username: "{{ vm_username }}"
-      vm_password: "{{ vm_password }}"
-      copy:
-        src: "/tmp/configure_vm_nic.sh"
-        dest: "/root/configure_vm_nic.sh"
-    delegate_to: localhost
+- name: loop post install scripts
+  include_tasks: post_setup_scripts.yml
+  loop: "{{ vm_post_setup_templates }}"
+  loop_control:
+    loop_var: post_setup_template
 
-  - name: Execute network setup commands inside VM
-    community.vmware.vmware_vm_shell:
-      hostname: "{{ vcenter_api_url }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: "{{ validate_certs }}"
-      folder: "{{ vm_folder }}"
-      vm_id: "{{ vm_name }}"
-      vm_username: "{{ vm_username }}"
-      vm_password: "{{ vm_password }}"
-      vm_shell: "/bin/bash"
-      vm_shell_args: "/root/configure_vm_nic.sh"
-    delegate_to: localhost
-  when: configure_vm_nic == True
-
-- name: Generate post setup commands from template
-  template:
-    src: "{{ vm_post_setup_template }}"
-    dest: "/tmp/post_setup.sh"
-
-- name: Push post setup commands to VM
-  community.vmware.vmware_guest_file_operation:
-    hostname: "{{ vcenter_api_url }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: "{{ validate_certs }}"
-    vm_id: "{{ vm_name }}"
-    vm_username: "{{ vm_username }}"
-    vm_password: "{{ vm_password }}"
-    copy:
-      src: "/tmp/post_setup.sh"
-      dest: "/root/post_setup.sh"
-  delegate_to: localhost
-
-- name: Execute post setup commands inside VM
-  community.vmware.vmware_vm_shell:
-    hostname: "{{ vcenter_api_url }}"
-    username: "{{ vcenter_username }}"
-    password: "{{ vcenter_password }}"
-    validate_certs: "{{ validate_certs }}"
-    folder: "{{ vm_folder }}"
-    vm_id: "{{ vm_name }}"
-    vm_username: "{{ vm_username }}"
-    vm_password: "{{ vm_password }}"
-    vm_shell: "/bin/bash"
-    vm_shell_args: "/root/post_setup.sh"
-  when: vm_post_setup_template is defined
-  delegate_to: localhost

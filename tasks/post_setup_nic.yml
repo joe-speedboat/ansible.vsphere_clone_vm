@@ -1,0 +1,38 @@
+---
+# tasks/post_setup_scripts.yml
+- name: expand post setup script for NIC configuration
+  block:
+  - name: Generate network setup commands from template
+    template:
+      src: "configure_vm_nic.j2"
+      dest: "/tmp/configure_vm_nic.sh"
+
+  - name: Push network setup commands to VM
+    community.vmware.vmware_guest_file_operation:
+      hostname: "{{ vcenter_api_url }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: "{{ validate_certs }}"
+      vm_id: "{{ vm_name }}"
+      vm_username: "{{ vm_username }}"
+      vm_password: "{{ vm_password }}"
+      copy:
+        src: "/tmp/configure_vm_nic.sh"
+        dest: "/root/configure_vm_nic.sh"
+    delegate_to: localhost
+
+  - name: Execute network setup commands inside VM
+    community.vmware.vmware_vm_shell:
+      hostname: "{{ vcenter_api_url }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      validate_certs: "{{ validate_certs }}"
+      folder: "{{ vm_folder }}"
+      vm_id: "{{ vm_name }}"
+      vm_username: "{{ vm_username }}"
+      vm_password: "{{ vm_password }}"
+      vm_shell: "/bin/bash"
+      vm_shell_args: "/root/configure_vm_nic.sh"
+    delegate_to: localhost
+
+

@@ -1,0 +1,77 @@
+#!/bin/bash
+
+LOG=/root/freeipa_join.log
+FREEIPA_SERVERS='{{ domain_join_servers }}'
+FREEIPA_DOMAIN=$(echo $FREEIPA_SERVERS | cut -d' ' -f1 | cut -d. -f2- )
+FREEIPA_REALM=$(echo $FREEIPA_DOMAIN | tr 'a-z' 'A-Z' )
+> $LOG
+
+echo STARTED FREEIPA JOIN TASKS >> $LOG 2>&1
+echo ======================== >> $LOG 2>&1
+echo "DATE: $(date)" >> $LOG 2>&1
+echo >> $LOG 2>&1
+
+source /etc/os-release
+case "$ID" in
+  rhel|centos|almalinux|rocky)
+    os_type="rhel"
+    ;;
+  ubuntu)
+    os_type="ubuntu"
+    ;;
+esac
+case "$VERSION_ID" in
+  7*)
+    os_ver=7
+    ;;
+  8*)
+    os_ver=8
+    ;;
+  9*)
+    os_ver=9
+    ;;
+  20.04|18.04|22.04|24.04)
+    os_ver=20
+    ;;
+esac
+
+echo "INFO: Operating system found: os_type=$os_type os_ver=$os_ver" >> $LOG 2>&1
+
+if [ "$os_type$os_ver" == "rhel7"  ] #######################################################
+then
+  for PKG in ipa-client
+  do
+     rpm -q $PKG >/dev/null 2>&1 && echo $PKG is already installed >> $LOG 2>&1 || yum -y install $PKG >> $LOG 2>&1
+  done
+  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || yum -y install python >> $LOG 2>&1
+
+elif [ "$os_type$os_ver" == "rhel8"  ] #######################################################
+then
+  for PKG in ipa-client
+  do
+     rpm -q $PKG >/dev/null 2>&1 && echo $PKG is already installed >> $LOG 2>&1 || dnf -y install $PKG >> $LOG 2>&1
+  done
+  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || dnf -y install python3 >> $LOG 2>&1
+elif [ "$os_type$os_ver" == "rhel9"  ] #################################################
+then
+  for PKG in ipa-client
+  do
+     rpm -q $PKG >/dev/null 2>&1 && echo $PKG is already installed >> $LOG 2>&1 || dnf -y install $PKG >> $LOG 2>&1
+  done
+  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || dnf -y install python3 >> $LOG 2>&1
+elif [ "$os_type$os_ver" == "ubuntu20"  ] #################################################
+then
+  export DEBIAN_FRONTEND=noninteractive
+  for PKG in freeipa-client
+  do
+     dpkg -s $PKG >/dev/null 2>&1 && echo $PKG is already installed >> $LOG 2>&1 || apt-get -y install $PKG >> $LOG 2>&1
+  done
+  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || apt-get -y install python3-minimal >> $LOG 2>&1
+else
+  echo "WARNING: No supported operating system found: os_type=$os_type os_ver=$os_ver" >> $LOG 2>&1
+  exit 1
+fi
+
+ipa-client-install --force-join --no-ntp --hostname={{ vm_name }} --mkhomedir $(for SRV in $FREEIPA_SERVERS ; do echo -n "--server $SRV "; done) --domain $FREEIPA_DOMAIN --realm $FREEIPA_REALM -p '{{ domain_join_user }}' --fixed-primary --unattended -w '{{ domain_join_pass }}' >> $LOG 2>&1
+
+sed -i 's/{{ domain_join_pass }}/xxxxxx/g' $LOG $(basename $0)

@@ -1,0 +1,14 @@
+LOG=/root/disk_resize.log
+echo STARTED DISK RESIZE TASKS >> $LOG
+echo ========================= >> $LOG
+echo "DATE: $(date)" >> $LOG
+echo >> $LOG
+
+echo EXPAND LVM PV DISK >> $LOG
+DISK=sda
+PART=3
+parted /dev/$DISK resizepart $PART 100% >>$LOG 2>&1
+pvresize /dev/$DISK$PART >>$LOG 2>&1
+
+echo >> $LOG
+echo disk resize steps finished >> $LOG
