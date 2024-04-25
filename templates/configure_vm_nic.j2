@@ -74,7 +74,7 @@ configure_debian() {
     mylog "Configuring Debian-based system"
 
     mylog "Removing existing netplan configurations, excluding the loopback interface"
-    rm -f /etc/netplan/*.yaml
+    rm -fv /etc/netplan/*.yaml
 
     mylog "Converting traditional subnet mask to CIDR notation"
     IFS='.' read -r i1 i2 i3 i4 <<< "$MASK"
