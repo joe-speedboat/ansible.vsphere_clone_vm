@@ -1,12 +1,9 @@
 #!/bin/bash
 # configure vm network settings for ubuntu and rhel-like os
 
-# Log file location
-LOG=/root/configure_vm_nic.log
-
 # Logging function with timestamp
 mylog() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $*" >> $LOG
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $*"
 }
 
 mylog "STARTED NETWORK SETUP TASKS"
@@ -36,7 +33,7 @@ configure_rhel() {
     mylog "Configuring RHEL-based system"
 
     mylog "Removing existing NIC configurations, excluding the loopback interface"
-    nmcli connection delete $(nmcli -t -f NAME connection show | grep -v 'lo') 2>> $LOG
+    nmcli connection delete $(nmcli -t -f NAME connection show | grep -v 'lo') 
 
     mylog "Getting the first non-loopback network interface"
     NIC=$(ip link show | grep -v lo | awk -F: '$0 !~ "lo|vir|^[^0-9]"{print $2;getline}' | head -n 1)
@@ -55,16 +52,16 @@ configure_rhel() {
 
 
     mylog "Configuring network interface"
-    nmcli connection add type ethernet con-name $NIC ifname $NIC 2>> $LOG
-    nmcli connection modify $NIC ipv4.addresses $IP/$CIDR 2>> $LOG
-    nmcli connection modify $NIC ipv4.gateway $GATEWAY 2>> $LOG
-    nmcli connection modify $NIC ipv4.dns "$DNS_SERVERS_FORMATTED" 2>> $LOG
-    nmcli connection modify $NIC ipv4.dns-search $DNS_DOMAIN 2>> $LOG
-    nmcli connection modify $NIC ipv4.method manual 2>> $LOG
-    nmcli connection up $NIC 2>> $LOG
+    nmcli connection add type ethernet con-name $NIC ifname $NIC 
+    nmcli connection modify $NIC ipv4.addresses $IP/$CIDR 
+    nmcli connection modify $NIC ipv4.gateway $GATEWAY 
+    nmcli connection modify $NIC ipv4.dns "$DNS_SERVERS_FORMATTED" 
+    nmcli connection modify $NIC ipv4.dns-search $DNS_DOMAIN 
+    nmcli connection modify $NIC ipv4.method manual 
+    nmcli connection up $NIC 
 
     mylog "Disabling IPv6 for the NIC"
-    nmcli connection modify $NIC ipv6.method ignore 2>> $LOG
+    nmcli connection modify $NIC ipv6.method ignore 
 
     mylog "RHEL-based system configuration complete"
 }
@@ -74,7 +71,12 @@ configure_debian() {
     mylog "Configuring Debian-based system"
 
     mylog "Removing existing netplan configurations, excluding the loopback interface"
-    rm -fv /etc/netplan/*.yaml
+    rm -fv /etc/netplan/*.yaml 
+
+    mylog "Regenerate SSH Host Keys: $(date)"
+    rm -fv /etc/ssh/ssh_host_*
+    dpkg-reconfigure openssh-server
+    mylog "Finished: Regenerate SSH Host Keys: $(date)"
 
     mylog "Converting traditional subnet mask to CIDR notation"
     IFS='.' read -r i1 i2 i3 i4 <<< "$MASK"
@@ -96,14 +98,20 @@ network:
       dhcp4: no
       dhcp6: no
       addresses: [$IP/$CIDR]
-      gateway4: $GATEWAY
+      routes:
+          - to: default
+            via: $GATEWAY
       nameservers:
           addresses: [${DNS_SERVERS// /, }]
           search: [$DNS_DOMAIN]
 EOF
 
     mylog "Applying netplan configuration"
-    netplan apply 2>> $LOG
+    chmod -v 600 /etc/netplan/*.yaml
+    netplan generate
+    netplan apply
+    sleep 5
+    systemctl restart systemd-network-generator systemd-networkd systemd-networkd-wait-online ssh
 
     mylog "Debian-based system configuration complete"
 }

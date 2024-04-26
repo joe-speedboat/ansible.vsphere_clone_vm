@@ -1,15 +1,29 @@
 #!/bin/bash
 
-LOG=/root/freeipa_join.log
 FREEIPA_SERVERS='{{ domain_join_servers }}'
 FREEIPA_DOMAIN=$(echo $FREEIPA_SERVERS | cut -d' ' -f1 | cut -d. -f2- )
 FREEIPA_REALM=$(echo $FREEIPA_DOMAIN | tr 'a-z' 'A-Z' )
-> $LOG
 
-echo STARTED FREEIPA JOIN TASKS >> $LOG 2>&1
-echo ======================== >> $LOG 2>&1
-echo "DATE: $(date)" >> $LOG 2>&1
-echo >> $LOG 2>&1
+echo "DATE: $(date)"
+
+# this will at least 3m wait for network to become online
+for FREEIPA_SERVER in $FREEIPA_SERVERS $FREEIPA_SERVERS $FREEIPA_SERVERS
+do
+  echo "Try to resolv $FREEIPA_SERVER"
+  getent hosts $FREEIPA_SERVER
+  RC=$?
+  echo RC=$RC
+  if [ $RC -ne 0 ]
+  then
+    echo waiting 60s until network goes online
+    sleep 60
+  fi
+done
+
+echo STARTED FREEIPA JOIN TASKS
+echo ========================
+echo "DATE: $(date)"
+echo
 
 source /etc/os-release
 case "$ID" in
@@ -35,43 +49,46 @@ case "$VERSION_ID" in
     ;;
 esac
 
-echo "INFO: Operating system found: os_type=$os_type os_ver=$os_ver" >> $LOG 2>&1
+echo "INFO: Operating system found: os_type=$os_type os_ver=$os_ver"
 
 if [ "$os_type$os_ver" == "rhel7"  ] #######################################################
 then
   for PKG in ipa-client
   do
-     rpm -q $PKG >/dev/null 2>&1 && echo $PKG is already installed >> $LOG 2>&1 || yum -y install $PKG >> $LOG 2>&1
+     rpm -q $PKG >/dev/null 2>&1 && echo $PKG is already installed || yum -y install $PKG
   done
-  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || yum -y install python >> $LOG 2>&1
+  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || yum -y install python
 
 elif [ "$os_type$os_ver" == "rhel8"  ] #######################################################
 then
   for PKG in ipa-client
   do
-     rpm -q $PKG >/dev/null 2>&1 && echo $PKG is already installed >> $LOG 2>&1 || dnf -y install $PKG >> $LOG 2>&1
+     rpm -q $PKG >/dev/null 2>&1 && echo $PKG is already installed || dnf -y install $PKG
   done
-  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || dnf -y install python3 >> $LOG 2>&1
+  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || dnf -y install python3
 elif [ "$os_type$os_ver" == "rhel9"  ] #################################################
 then
   for PKG in ipa-client
   do
-     rpm -q $PKG >/dev/null 2>&1 && echo $PKG is already installed >> $LOG 2>&1 || dnf -y install $PKG >> $LOG 2>&1
+     rpm -q $PKG >/dev/null 2>&1 && echo $PKG is already installed || dnf -y install $PKG
   done
-  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || dnf -y install python3 >> $LOG 2>&1
+  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || dnf -y install python3
 elif [ "$os_type$os_ver" == "ubuntu20"  ] #################################################
 then
   export DEBIAN_FRONTEND=noninteractive
   for PKG in freeipa-client
   do
-     dpkg -s $PKG >/dev/null 2>&1 && echo $PKG is already installed >> $LOG 2>&1 || apt-get -y install $PKG >> $LOG 2>&1
+     dpkg -s $PKG >/dev/null 2>&1 && echo $PKG is already installed || apt-get -y install $PKG
   done
-  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || apt-get -y install python3-minimal >> $LOG 2>&1
+  which python >/dev/null 2>&1 || which python3 >/dev/null 2>&1 || apt-get -y install python3-minimal
 else
-  echo "WARNING: No supported operating system found: os_type=$os_type os_ver=$os_ver" >> $LOG 2>&1
+  echo "WARNING: No supported operating system found: os_type=$os_type os_ver=$os_ver"
   exit 1
 fi
 
-ipa-client-install --force-join --no-ntp --hostname={{ vm_name }} --mkhomedir $(for SRV in $FREEIPA_SERVERS ; do echo -n "--server $SRV "; done) --domain $FREEIPA_DOMAIN --realm $FREEIPA_REALM -p '{{ domain_join_user }}' --fixed-primary --unattended -w '{{ domain_join_pass }}' >> $LOG 2>&1
+ipa-client-install --force-join --no-ntp --hostname={{ vm_name }} --mkhomedir $(for SRV in $FREEIPA_SERVERS ; do echo -n "--server $SRV "; done) --domain $FREEIPA_DOMAIN --realm $FREEIPA_REALM -p '{{ domain_join_user }}' --fixed-primary --unattended -w '{{ domain_join_pass }}'
 
-sed -i 's/{{ domain_join_pass }}/xxxxxx/g' $LOG $(basename $0)
+echo "Finished DATE: $(date)"
+echo "Masking Passwords"
+sed -i 's/{{ domain_join_pass }}/xxxxxx/g' $(basename $0|rev |cut -d. -f2- |rev)* 
+echo done
