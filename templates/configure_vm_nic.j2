@@ -13,8 +13,18 @@ IP="{{ vm_nic.ip }}"
 MASK="{{ vm_nic.mask }}"
 GATEWAY="{{ vm_nic.gateway }}"
 DNS_DOMAIN="{{ vm_nic.dns_domain }}"
-HOSTNAME="{{ vm_nic.hostname }}.{{ vm_nic.dns_domain }}"
 DNS_SERVERS="{{ vm_nic.dns_server }}"
+
+# find out if hostname contains dns-domain
+echo "{{ vm_nic.hostname }}" | grep -q "$DNS_DOMAIN"
+if [ $? -eq 0 ]
+then
+  # if hostname is fqdn
+  HOSTNAME="{{ vm_nic.hostname }}"
+else
+  # if hostname is just host
+  HOSTNAME="{{ vm_nic.hostname }}.{{ vm_nic.dns_domain }}"
+fi
 
 # Detect OS type
 if [[ -f /etc/redhat-release ]]; then
