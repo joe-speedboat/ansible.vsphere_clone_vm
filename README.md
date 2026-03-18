@@ -7,7 +7,7 @@ This role clones a VM from a template on a vSphere environment.
 - Python packages:
   - pip
   - setuptools
-  - [vsphere-automation-sdk-python](https://github.com/vmware/vsphere-automation-sdk-python)
+  - [vsphere-automation-sdk-python](https://github.com/vmware/vsphere-automation-sdk-python)`  
     `pip3.12 install git+https://github.com/vmware/vsphere-automation-sdk-python.git`
 - Ansible collection:
   - community.vmware
